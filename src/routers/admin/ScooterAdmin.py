@@ -4,7 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 
 from src.database import get_db
-from src.models import Station, Scooter
+from src.models import Station, Scooter, User
+from src.services import (security, auth)
 
 from src.schemas.ScooterSchemas import (
     ScooterCreate, ScooterResponse, ScooterUpdate
@@ -12,8 +13,7 @@ from src.schemas.ScooterSchemas import (
 
 admin_router = APIRouter(
     prefix="/api/v1/admin",
-    tags=["admins"],
-    dependencies=[Depends(verify_admin)]  
+    tags=["admins"]
 )
 
 # Створити самокат
@@ -34,7 +34,11 @@ async def create_scooter(station_id: int, scooter: ScooterCreate, db: AsyncSessi
 
 # Видалити самокат
 @admin_router.delete("/scooters/{scooter_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_scooter(scooter_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_scooter(
+    scooter_id: int, 
+    current_user: User = Depends(auth.require_role("admin")),
+    db: AsyncSession = Depends(get_db)):
+    
     query = select(Scooter).where(Scooter.id == scooter_id)
     result = await db.execute(query)
     scooter = result.scalar_one_or_none()
@@ -53,8 +57,8 @@ async def delete_scooter(scooter_id: int, db: AsyncSession = Depends(get_db)):
 async def update_scooter(
     scooter_id: int,
     scooter_data: ScooterUpdate,
-    db: AsyncSession = Depends(get_db)
-    ):
+    current_user: User = Depends(auth.require_role("admin")),
+    db: AsyncSession = Depends(get_db)):
 
     query = select(Scooter).where(Scooter.id == scooter_id)
     result = await db.execute(query)

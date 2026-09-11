@@ -7,8 +7,10 @@ from sqlalchemy.orm import selectinload
 
 from src.services.ride_service import calculate_cost
 from src.database import get_db
-from src.models import Scooter, Station, Ride
+from src.models import Scooter, Station, Ride, User
 from src.models.RidesModel import StatusRide
+from src.services import (security, auth)
+
 
 from src.schemas.ScooterSchemas import (
     ScooterResponse, ScooterReturn
@@ -22,7 +24,11 @@ router = APIRouter(
 
 # Отримати інформацію про незайняті самокати
 @router.get("/{station_id}/scooters/available", response_model=List[ScooterResponse])
-async def get_avaible_scooter(station_id: int, db: AsyncSession = Depends(get_db)):
+async def get_avaible_scooter(
+    station_id: int, 
+    current_user: User = Depends(auth.require_role("user")),
+    db: AsyncSession = Depends(get_db)):
+
     query = select(Scooter).where(Scooter.station_id == station_id, Scooter.is_available == True)
     result = await db.execute(query)
     scooters = result.scalars().all()
@@ -31,7 +37,12 @@ async def get_avaible_scooter(station_id: int, db: AsyncSession = Depends(get_db
 
 # Арендувати самокат
 @router.patch("/{station_id}/scooters/{scooter_id}/rent", response_model=ScooterResponse)
-async def rent_scooter(station_id: int, scooter_id: int, db: AsyncSession = Depends(get_db)):
+async def rent_scooter(
+    station_id: int, 
+    scooter_id: int, 
+    current_user: User = Depends(auth.require_role("user")),
+    db: AsyncSession = Depends(get_db)):
+
     query = select(Station).where(Station.id == station_id)
     result = await db.execute(query)
     station = result.scalar_one_or_none()
@@ -65,7 +76,12 @@ async def rent_scooter(station_id: int, scooter_id: int, db: AsyncSession = Depe
 
 # Припинити аренду самокату
 @router.patch("/{station_id}/scooters/{scooter_id}/return", response_model=ScooterResponse)
-async def return_scooter(station_id: int, scooter_id: int, return_data: ScooterReturn, db: AsyncSession = Depends(get_db)):
+async def return_scooter(
+    station_id: int, 
+    scooter_id: int, 
+    return_data: ScooterReturn, 
+    current_user: User = Depends(auth.require_role("user")),
+    db: AsyncSession = Depends(get_db)):
 
     query = select(Scooter).where(Scooter.id == scooter_id, Scooter.station_id == station_id) 
     result = await db.execute(query)

@@ -6,7 +6,8 @@ from typing import List
 from sqlalchemy.orm import selectinload
 
 from src.database import get_db
-from src.models import Station, Scooter
+from src.models import Station, Scooter, User
+from src.services import (security, auth)
 
 from src.schemas.StationSchemas import (
     StationCreate, StationResponse, StationUpdate
@@ -14,13 +15,15 @@ from src.schemas.StationSchemas import (
 
 admin_router = APIRouter(
     prefix="/api/v1/admin",
-    tags=["admins"],
-    dependencies=[Depends(verify_admin)]  
+    tags=["admins"]
 )
 
 # Список станцій
 @admin_router.get("stations", response_model=List[StationResponse])
-async def get_stations(db: AsyncSession = Depends(get_db)):
+async def get_stations(
+    current_user: User = Depends(auth.require_role("admin")),
+    db: AsyncSession = Depends(get_db)):
+
     query = select(Station).options(
         selectinload(Station.scooters),
         selectinload(Station.staff)
@@ -31,7 +34,11 @@ async def get_stations(db: AsyncSession = Depends(get_db)):
 
 # Створити станцію
 @admin_router.post("/stations", response_model=StationResponse, status_code=status.HTTP_201_CREATED)
-async def create_station(station: StationCreate, db: AsyncSession = Depends(get_db)):
+async def create_station(
+    station: StationCreate, 
+    current_user: User = Depends(auth.require_role("admin")),
+    db: AsyncSession = Depends(get_db)):
+
     new_station = Station(**station.model_dump())
     db.add(new_station)
     await db.commit()
@@ -41,7 +48,11 @@ async def create_station(station: StationCreate, db: AsyncSession = Depends(get_
 
 # Видалити станцію
 @admin_router.delete("/stations/{station_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_stations(station_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_stations(
+    station_id: int, 
+    current_user: User = Depends(auth.require_role("admin")),
+    db: AsyncSession = Depends(get_db)):
+
     query = select(Station).where(Station.id == station_id)
     result = await db.execute(query)
     station = result.scalar_one_or_none()
@@ -70,8 +81,8 @@ async def delete_stations(station_id: int, db: AsyncSession = Depends(get_db)):
 async def update_station(
     station_id: int,
     station_data: StationUpdate,
-    db: AsyncSession = Depends(get_db)
-    ):
+    current_user: User = Depends(auth.require_role("admin")),
+    db: AsyncSession = Depends(get_db)):
 
     query = select(Station).where(Station.id == station_id)
     result = await db.execute(query)

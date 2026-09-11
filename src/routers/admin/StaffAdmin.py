@@ -7,6 +7,7 @@ from sqlalchemy.orm import selectinload
 
 from src.database import get_db
 from src.models import Station, Staff, User
+from src.services import (security, auth)
 
 from src.schemas.StaffSchemas import (
     StaffCreate, StaffUpdate, StaffResponse
@@ -14,12 +15,16 @@ from src.schemas.StaffSchemas import (
 
 admin_router = APIRouter(
     prefix="/api/v1/admin",
-    tags=["admins"],
-    dependencies=[Depends(verify_admin)]  
+    tags=["admins"]
 )
 # Створити нового співробітника
 @admin_router.post("station/{station_id}/staff", response_model=StaffResponse, status_code=status.HTTP_201_CREATED)
-async def create_staff(station_id: int, staff: StaffCreate, db: AsyncSession = Depends(get_db)):
+async def create_staff(
+    station_id: int, 
+    staff: StaffCreate, 
+    current_user: User = Depends(auth.require_role("admin")),
+    db: AsyncSession = Depends(get_db)):
+
     query = select(Station).where(Station.id == station_id)
     result = await db.execute(query)
     station = result.scalar_one_or_none()
@@ -42,7 +47,11 @@ async def create_staff(station_id: int, staff: StaffCreate, db: AsyncSession = D
 
 # Отримати список всіх співробітників на станції
 @admin_router.get("station/{station_id}/staff", response_model=List[StaffResponse], status_code=status.HTTP_201_CREATED)
-async def get_staff(station_id: int, db: AsyncSession = Depends(get_db)):
+async def get_staff(
+    station_id: int, 
+    current_user: User = Depends(auth.require_role("admin")),
+    db: AsyncSession = Depends(get_db)):
+
     query = select(Staff).where(Staff.station_id == station_id)
     result = await db.execute(query)
     staff = result.scalars().all()
@@ -50,7 +59,13 @@ async def get_staff(station_id: int, db: AsyncSession = Depends(get_db)):
 
 # Оновити інформацію про співробітника
 @admin_router.patch("station/{station_id}/staff/{staff_id}", response_model=StaffResponse)
-async def update_staff(station_id: int, staff_id: int, staff_data: StaffUpdate, db: AsyncSession = Depends(get_db)):
+async def update_staff(
+    station_id: int, 
+    staff_id: int, 
+    staff_data: StaffUpdate, 
+    current_user: User = Depends(auth.require_role("admin")),
+    db: AsyncSession = Depends(get_db)):
+
     query = select(Staff).where(Staff.id == staff_id)
     result = await db.execute(query)
     staff = result.scalar_one_or_none()
@@ -78,8 +93,9 @@ async def update_staff(station_id: int, staff_id: int, staff_data: StaffUpdate, 
 @admin_router.delete("/staff/{staff_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_staff(
     staff_id: int, 
-    db: AsyncSession = Depends(get_db)
-    ):
+    current_user: User = Depends(auth.require_role("admin")),
+    db: AsyncSession = Depends(get_db)):
+
     query = select(Staff).where(Staff.id == staff_id)
     result = await db.execute(query)
     staff = result.scalar_one_or_none()
