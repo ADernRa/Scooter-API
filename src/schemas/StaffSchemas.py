@@ -8,6 +8,7 @@ class StaffBase(BaseModel):
     surname: str = Field(..., max_length=30)
     start_work: date = Field(...)
     job_title: str = Field(..., max_length=40)
+    user_id: int = Field(...)
 
 class StaffCreate(StaffBase):
     pass

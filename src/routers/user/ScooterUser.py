@@ -8,7 +8,7 @@ from sqlalchemy.orm import selectinload
 from src.services.ride_service import calculate_cost
 from src.database import get_db
 from src.models import Scooter, Station, Ride
-from models.RidesModel import StatusRide
+from src.models.RidesModel import StatusRide
 
 from src.schemas.ScooterSchemas import (
     ScooterResponse, ScooterReturn

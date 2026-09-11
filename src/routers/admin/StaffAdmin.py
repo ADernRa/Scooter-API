@@ -6,7 +6,7 @@ from typing import List
 from sqlalchemy.orm import selectinload
 
 from src.database import get_db
-from src.models import Station, Staff
+from src.models import Station, Staff, User
 
 from src.schemas.StaffSchemas import (
     StaffCreate, StaffUpdate, StaffResponse
@@ -26,6 +26,14 @@ async def create_staff(station_id: int, staff: StaffCreate, db: AsyncSession = D
     if not station:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Station not found")
 
+    if staff.user_id is not None:
+            user = await db.execute(select(User).where(User.id == staff.user_id))
+            if not user.scalar_one_or_none():
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"User with ID {staff.user_id} does not exist"
+                )
+        
     new_staff = Staff(**staff.model_dump(), station_id=station_id)
     db.add(new_staff)
     await db.commit()
