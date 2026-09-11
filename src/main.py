@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from src.routers.admin import ScooterAdmin, StationAdmin, StaffAdmin
-from src.routers.user import ScooterUser
+from src.routers.user import ScooterUser, authorization
 from fastapi.middleware.cors import CORSMiddleware
 from src.config import settings
 from contextlib import asynccontextmanager
@@ -39,6 +39,7 @@ app.include_router(StationAdmin.admin_router)
 app.include_router(ScooterAdmin.admin_router)
 app.include_router(StaffAdmin.admin_router)
 app.include_router(ScooterUser.router)
+app.include_router(authorization.router)
 
 @app.get("/", tags=["Health Check"])
 def health_check():
