@@ -10,7 +10,8 @@ class UserCreate(UserBase):
 class UserResponse(BaseModel):
     id: int
     login: str
-
+    role: str
+    
     model_config = ConfigDict(from_attributes=True)
 
 class Token(BaseModel):
