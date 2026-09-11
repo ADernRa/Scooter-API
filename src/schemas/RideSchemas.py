@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, ConfigDict
 from datetime import date
-from src.models.Rides import StatusRide
+from models.RidesModel import StatusRide
 from datetime import datetime
 from typing import Optional
 

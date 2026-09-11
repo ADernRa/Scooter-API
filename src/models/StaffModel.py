@@ -13,5 +13,7 @@ class Staff(Base):
     start_work: Mapped[date] = mapped_column(Date, nullable=False)
     job_title: Mapped[str] = mapped_column(String(40), nullable=False)
     station_id: Mapped[int] = mapped_column(ForeignKey("stations.id"), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
 
+    users: Mapped["User"] = relationship("User", back_populates="staff")
     station: Mapped["Station"] = relationship("Station", back_populates="staff")
