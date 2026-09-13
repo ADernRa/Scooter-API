@@ -7,6 +7,7 @@
 - **Pydantic v2 & Pydantic-Settings** - сувора валідація конфігурації та даних.
 - **JWT (JSON Web Tokens) & Passlib** - безпечна аутентифікація, хешування паролів та захист маршрутів.
 - **Uvicorn** - ASGI вебсервер.
+- **PostgreSQL** - БД проєкту.
 
 ---
 
